@@ -38,11 +38,11 @@ if(mode==="weak"){
 
 let i=0;
 
+
 function speak(){
- let u=new SpeechSynthesisUtterance(words[i]);
- u.rate=0.8;
- speechSynthesis.speak(u);
+  speechSynthesis.speak(new SpeechSynthesisUtterance(words[i]||""));
 }
+
 
 let rec=new webkitSpeechRecognition();
 rec.onresult=e=>{
