@@ -3,244 +3,86 @@
 <head>
 <meta charset="UTF-8">
 <title>Quiz</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="manifest" href="manifest.json">
 <style>
-body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);color:white;text-align:center;margin:0}
-.container{background:white;color:black;padding:25px;margin:20px auto;max-width:480px;border-radius:18px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
-.topbar{display:flex;justify-content:space-between;gap:10px;align-items:center}
-select{padding:8px;border-radius:8px}
-.stats{display:flex;justify-content:space-around;margin:10pxs 0;font-weight:bold}
-.stat{padding:6px 10px;border-radius:10px;color:white}
-.xp{background:#ffb703}.level{background:#219ebc}.streak{background:#fb8500}
-.progress-bar{height:10px;background:#ddd;border-radius:10px;overflow:hidden;margin:10px 0}
-.progress-fill{height:100%;width:0;background:#4caf50}
-.input-row{display:flex;gap:10px;margin-top:10px}
-input{flex:1;padding:15px;font-size:22px;border-radius:10px;border:2px solid #ccc}
-button{padding:14px 16px;margin:10px 5px;border-radius:12px;border:none;font-size:16px;color:white;cursor:pointer}
-.hear{background:linear-gradient(135deg,#4facfe,#00f2fe)}
-.next{background:linear-gradient(135deg,#43e97b,#38f9d7)}
-.submit{background:linear-gradient(135deg,#ff7b7b,#ff4d4d)}
-.back{background:#777}
-#xpPop{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:30px;color:gold;display:none;animation:pop 1s ease}
-@keyframes pop{0%{transform:translate(-50%,-50%) scale(.5);opacity:0}50%{transform:translate(-50%,-60%) scale(1.2);opacity:1}100%{transform:translate(-50%,-80%) scale(1);opacity:0}}
-#badgePopup{position:fixed;top:30%;left:50%;transform:translate(-50%,-50%) scale(.5);background:gold;color:black;padding:18px 26px;border-radius:15px;font-size:20px;font-weight:bold;display:none;z-index:1000;animation:popupAnim 1s ease forwards}
-@keyframes popupAnim{0%{transform:translate(-50%,-50%) scale(.5);opacity:0}50%{transform:translate(-50%,-60%) scale(1.2);opacity:1}100%{transform:translate(-50%,-70%) scale(1);opacity:0}}
-#finishScreen{display:none}
-#badges{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
-.badge{background:gold;padding:8px 12px;border-radius:10px}
-#confetti{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none}
-body.dark{background:#121212;color:#eee}
-body.dark .container{background:#1e1e1e;color:#fff}
-body.kid{background:linear-gradient(135deg,#ff9a9e,#fad0c4)}
-body.kid .container{background:#fff8dc}
-body.kid button{font-size:18px}
+body{font-family:sans-serif;background:linear-gradient(135deg,#6a85ff,#b06ab3);color:white;text-align:center}
+.container{background:white;color:black;padding:20px;margin:20px auto;max-width:400px;border-radius:15px}
+input{width:70%;padding:12px;font-size:20px}
+.correct{color:green}
+.wrong{color:red}
 </style>
 </head>
-<body class="light">
-
-<div class="container" id="quizBox">
-  <div class="topbar">
-    <label>🔊 <input type="checkbox" id="soundToggle" checked></label>
-    <label>🎨 
-      <select id="themeSelect">
-        <option value="light">☀️</option>
-        <option value="dark">🌙</option>
-        <option value="kid">🌈</option>
-      </select>
-    </label>
-  </div>
-
-  <h2 id="avatarIcon"></h2>
-  <h3 id="userName"></h3>
-
-  <div class="stats">
-    <div class="stat xp" id="xp"></div>
-    <div class="stat level" id="level"></div>
-    <div class="stat streak" id="streak"></div>
-  </div>
-
-  <div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div>
-
-  <button class="hear" onclick="speak()">🔊 Hear</button>
-
-  <div class="input-row">
-    <input id="ans" placeholder="Type spelling here">
-    <button class="submit" onclick="check()">Submit</button>
-  </div>
-
-  <button class="next" onclick="next()">Next ➡️</button>
-  <p id="res"></p>
-  <button class="back" onclick="back()">⬅ Back</button>
+<body>
+<h1>Quiz</h1>
+<div class="container">
+<button onclick="speak()">Hear</button>
+<input id="ans">
+<button onclick="listen()">Speak</button>
+<div id="letters"></div>
+<p id="res"></p>
 </div>
-
-<div class="container" id="finishScreen">
-  <h2>🎉 Great Job!</h2>
-  <h3 id="finalScore"></h3>
-  <h3 id="xpEarned"></h3>
-  <h3>🏆 Badges</h3>
-  <div id="badges"></div>
-  <button onclick="restart()">Play Again</button>
-</div>
-
-<div id="xpPop">+10 ⭐</div>
-<div id="badgePopup"></div>
-<canvas id="confetti"></canvas>
 
 <script>
-// audio
-const bgMusic=new Audio("https://www.bensound.com/bensound-music/bensound-funky.mp3");
-bgMusic.loop=true;bgMusic.volume=.3;
-const correctSound=new Audio("https://www.soundjay.com/buttons/sounds/button-3.mp3");
-const wrongSound=new Audio("https://www.soundjay.com/buttons/sounds/button-10.mp3");
-const badgeSound=new Audio("https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3");
+let mode=localStorage.getItem("mode");
+let all=JSON.parse(localStorage.getItem("parentWords")||[]);
+let perf=JSON.parse(localStorage.getItem("perf")||{});
+let words=all;
 
-// sound toggle
-let soundEnabled=localStorage.getItem("sound")!=="off";
-soundToggle.checked=soundEnabled;
-if(soundEnabled){bgMusic.play().catch(()=>{})}
-soundToggle.onchange=()=>{
-  soundEnabled=soundToggle.checked;
-  localStorage.setItem("sound",soundEnabled?"on":"off");
-  if(soundEnabled){bgMusic.play().catch(()=>{})}else{bgMusic.pause()}
-};
-
-// theme
-let theme=localStorage.getItem("theme")||"light";
-document.body.className=theme;themeSelect.value=theme;
-themeSelect.onchange=()=>{let t=themeSelect.value;document.body.className=t;localStorage.setItem("theme",t)};
-
-// user + avatar
-let user=localStorage.getItem("currentUser");
-userName.innerText=user||"";
-avatarIcon.innerText=localStorage.getItem("avatar_"+user)||"🧑";
-
-// words
-let words=JSON.parse(localStorage.getItem("words_"+user)||"[]");
-words.sort(()=>Math.random()-0.5);
-let i=0,score=0;
-
-// stats
-let stats=JSON.parse(localStorage.getItem("stats_"+user)||"{}");
-stats.xp=stats.xp||0;stats.level=stats.level||1;stats.streak=stats.streak||0;
-
-function updateStats(){
-  xp.innerText="⭐ "+stats.xp;
-  level.innerText="🏅 "+stats.level;
-  streak.innerText="🔥 "+stats.streak;
+if(mode==="weak"){
+ words=all.filter(w=>{
+  let s=perf[w];
+  if(!s)return true;
+  return (s.c/s.a)<0.7;
+ });
+ if(words.length===0)words=all;
 }
-updateStats();
+
+let i=0;
 
 function speak(){
-  speechSynthesis.speak(new SpeechSynthesisUtterance(words[i]||""));
+ let u=new SpeechSynthesisUtterance(words[i]);
+ u.rate=0.8;
+ speechSynthesis.speak(u);
 }
 
-function showXP(){
-  xpPop.style.display="block";
-  setTimeout(()=>xpPop.style.display="none",1000);
+let rec=new webkitSpeechRecognition();
+rec.onresult=e=>{
+ let t=e.results[0][0].transcript.toLowerCase().replace(/ /g,"");
+ ans.value=t;
+ check(t);
+};
+
+function listen(){rec.start();}
+
+function highlight(u,c){
+ let out="";
+ for(let i=0;i<c.length;i++){
+  if(u[i]===c[i]) out+="<span class='correct'>"+c[i]+"</span>";
+  else out+="<span class='wrong'>"+(u[i]||"_")+"</span>";
+ }
+ letters.innerHTML=out;
 }
 
-function check(){
-  let v=ans.value.trim();
-  if(!words.length){res.innerText="Add words first";return}
-  if(v.toLowerCase()===words[i].toLowerCase()){
-    res.innerText="✅ Correct!";
-    score++;stats.xp+=10;
-    if(soundEnabled) correctSound.play();
-    showXP();
-  }else{
-    res.innerText="❌ "+words[i]+" (Hint: "+words[i][0]+"...)";
-    if(soundEnabled) wrongSound.play();
-  }
-  updateProgress();
-}
+function check(input){
+ let w=words[i];
+ if(!perf[w]) perf[w]={a:0,c:0};
+ perf[w].a++;
 
-function next(){
+ highlight(input,w);
+
+ if(input===w){
+  res.innerText="Correct";
+  perf[w].c++;
   i++;
-  if(i>=words.length){finish();return}
-  ans.value="";res.innerText="";
-}
+ }else{
+  res.innerText="Try again";
+ }
 
-function updateProgress(){
-  let percent=((i+1)/words.length)*100;
-  progressFill.style.width=percent+"%";
-}
+ localStorage.setItem("perf",JSON.stringify(perf));
 
-function updateLevel(){stats.level=Math.floor(stats.xp/50)+1}
-function updateStreak(){
-  let today=new Date().toDateString();
-  if(stats.lastDate!==today){stats.streak++}
-  stats.lastDate=today;
-}
-
-function showBadgePopup(text){
-  badgePopup.innerText="🏆 "+text+" Unlocked!";
-  badgePopup.style.display="block";
-  setTimeout(()=>badgePopup.style.display="none",1200);
-}
-
-function showBadges(list){
-  badges.innerHTML="";
-  list.forEach(b=>{
-    let el=document.createElement("div");
-    el.className="badge";el.innerText=b;
-    badges.appendChild(el);
-  });
-}
-
-function checkBadges(){
-  let userBadges=JSON.parse(localStorage.getItem("badges_"+user)||"[]");
-  function addBadge(name){
-    if(!userBadges.includes(name)){
-      userBadges.push(name);
-      showBadgePopup(name);
-      if(soundEnabled) badgeSound.play();
-    }
-  }
-  if(score>0) addBadge("🥇 First Win");
-  if(score===words.length) addBadge("🎯 Perfect Score");
-  if(stats.streak>=3) addBadge("🔥 Streak Master");
-  if(stats.xp>=50) addBadge("⭐ XP Starter");
-  localStorage.setItem("badges_"+user,JSON.stringify(userBadges));
-  showBadges(userBadges);
-}
-
-function startConfetti(){
-  let c=confetti,ctx=c.getContext("2d");
-  c.width=innerWidth;c.height=innerHeight;
-  let pieces=[];
-  for(let k=0;k<120;k++){
-    pieces.push({x:Math.random()*c.width,y:Math.random()*c.height,dy:Math.random()*3+2});
-  }
-  function draw(){
-    ctx.clearRect(0,0,c.width,c.height);
-    ctx.fillStyle="gold";
-    pieces.forEach(p=>{
-      ctx.fillRect(p.x,p.y,5,5);
-      p.y+=p.dy;
-      if(p.y>c.height)p.y=0;
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
-}
-
-function finish(){
-  updateLevel();updateStreak();
-  localStorage.setItem("stats_"+user,JSON.stringify(stats));
-  quizBox.style.display="none";
-  finishScreen.style.display="block";
-  finalScore.innerText="Score: "+score+"/"+words.length;
-  xpEarned.innerText="XP Earned: "+(score*10);
-  checkBadges();
-  startConfetti();
-}
-
-function restart(){location.reload()}
-function back(){location.href="index.html"}
-
-if("serviceWorker" in navigator){
-  navigator.serviceWorker.register("service-worker.js");
+ if(i>=words.length){
+  alert("Done");
+  location.href="index.html";
+ }
 }
 </script>
 </body>
