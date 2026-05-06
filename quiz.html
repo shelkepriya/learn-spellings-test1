@@ -22,6 +22,7 @@ input{width:70%;padding:12px;font-size:20px}
 </div>
 
 <script>
+ window.speechSynthesis.onvoiceschanged = () => {};
 let mode=localStorage.getItem("mode");
 let all=JSON.parse(localStorage.getItem("parentWords")||[]);
 let perf=JSON.parse(localStorage.getItem("perf")||{});
@@ -39,9 +40,34 @@ if(mode==="weak"){
 let i=0;
 
 function speak(){
- let u=new SpeechSynthesisUtterance(words[i]);
- u.rate=0.8;
- speechSynthesis.speak(u);
+  if(!words[i]){
+    alert("No word found. Please add words in Parent mode.");
+    return;
+  }
+
+  // cancel any ongoing speech
+  speechSynthesis.cancel();
+
+  let utterance = new SpeechSynthesisUtterance(words[i]);
+
+  // wait for voices to load properly
+  let voices = speechSynthesis.getVoices();
+
+  if(voices.length === 0){
+    speechSynthesis.onvoiceschanged = () => speak();
+    return;
+  }
+
+  // optional: pick English voice
+  let voice = voices.find(v => v.lang.includes("en"));
+  if(voice){
+    utterance.voice = voice;
+  }
+
+  utterance.rate = 0.8;
+  utterance.pitch = 1;
+
+  speechSynthesis.speak(utterance);
 }
 
 let rec=new webkitSpeechRecognition();
