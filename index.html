@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Spelling App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
+<style>
+body{font-family:sans-serif;background:linear-gradient(135deg,#6a85ff,#b06ab3);text-align:center;color:white}
+.container{background:white;color:black;padding:20px;margin:20px auto;max-width:400px;border-radius:15px}
+button{width:100%;padding:12px;margin:6px;border:none;border-radius:10px;background:#ff7b7b;color:white}
+select,input{width:100%;padding:10px;margin:5px}
+</style>
+</head>
+<body>
+<h1>Spelling App</h1>
+<div class="container">
+<select id="userList"></select>
+<input id="newUser" placeholder="New user">
+<button onclick="addUser()">Add User</button>
+<button onclick="startQuiz()">Start Quiz</button>
+<button onclick="startWeak()">Weak Words</button>
+<button onclick="parent()">For Parents</button>
+</div>
+
+<script>
+function loadUsers(){
+ let u=JSON.parse(localStorage.getItem("users")||"[]");
+ userList.innerHTML="";
+ u.forEach(x=>{
+  let o=document.createElement("option");
+  o.textContent=x;
+  userList.appendChild(o);
+ });
+}
+loadUsers();
+
+function addUser(){
+ let n=newUser.value.trim();
+ if(!n)return;
+ let u=JSON.parse(localStorage.getItem("users")||"[]");
+ u.push(n);
+ localStorage.setItem("users",JSON.stringify(u));
+ loadUsers();
+}
+
+function startQuiz(){
+ localStorage.setItem("mode","normal");
+ location.href="quiz.html";
+}
+
+function startWeak(){
+ localStorage.setItem("mode","weak");
+ location.href="quiz.html";
+}
+
+function parent(){location.href="parent.html";}
+
+if("serviceWorker" in navigator){
+ navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+</body>
+</html>

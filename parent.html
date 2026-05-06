@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Parent</title>
+<style>
+body{font-family:sans-serif;background:linear-gradient(135deg,#6a85ff,#b06ab3);color:white;text-align:center}
+.container{background:white;color:black;padding:20px;margin:20px auto;max-width:500px;border-radius:15px}
+input{width:100%;padding:8px;margin:5px}
+button{padding:10px;width:100%;margin:5px;border:none;border-radius:8px;background:#667eea;color:white}
+li{background:#ffe5e5;margin:5px;padding:5px;border-radius:6px}
+</style>
+</head>
+<body>
+<h1>Parent Mode</h1>
+<div class="container">
+<h3>Add Words</h3>
+<div id="inputs"></div>
+<button onclick="save()">Save</button>
+
+<h3>Weak Words</h3>
+<ul id="weak"></ul>
+
+<button onclick="back()">Back</button>
+</div>
+<script>
+for(let i=0;i<30;i++){
+ let inp=document.createElement("input");
+ inp.id="w"+i;
+ inputs.appendChild(inp);
+}
+
+function load(){
+ let w=JSON.parse(localStorage.getItem("parentWords")||"[]");
+ w.forEach((v,i)=>{document.getElementById("w"+i).value=v;});
+}
+load();
+
+function save(){
+ let arr=[];
+ for(let i=0;i<30;i++){
+  let v=document.getElementById("w"+i).value.trim();
+  if(v)arr.push(v);
+ }
+ localStorage.setItem("parentWords",JSON.stringify(arr));
+ alert("Saved");
+}
+
+function loadWeak(){
+ let stats=JSON.parse(localStorage.getItem("perf")||{});
+ let list=[];
+ for(let k in stats){
+  let s=stats[k];
+  let acc=s.a?(s.c/s.a):0;
+  list.push({k,acc});
+ }
+ list.sort((a,b)=>a.acc-b.acc);
+ weak.innerHTML="";
+ list.slice(0,5).forEach(x=>{
+  let li=document.createElement("li");
+  li.innerText=x.k+" "+Math.round(x.acc*100)+"%";
+  weak.appendChild(li);
+ });
+}
+loadWeak();
+
+function back(){location.href="index.html";}
+</script>
+</body>
+</html>

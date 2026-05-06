@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Quiz</title>
+<style>
+body{font-family:sans-serif;background:linear-gradient(135deg,#6a85ff,#b06ab3);color:white;text-align:center}
+.container{background:white;color:black;padding:20px;margin:20px auto;max-width:400px;border-radius:15px}
+input{width:70%;padding:12px;font-size:20px}
+.correct{color:green}
+.wrong{color:red}
+</style>
+</head>
+<body>
+<h1>Quiz</h1>
+<div class="container">
+<button onclick="speak()">Hear</button>
+<input id="ans">
+<button onclick="listen()">Speak</button>
+<div id="letters"></div>
+<p id="res"></p>
+</div>
+
+<script>
+let mode=localStorage.getItem("mode");
+let all=JSON.parse(localStorage.getItem("parentWords")||[]);
+let perf=JSON.parse(localStorage.getItem("perf")||{});
+let words=all;
+
+if(mode==="weak"){
+ words=all.filter(w=>{
+  let s=perf[w];
+  if(!s)return true;
+  return (s.c/s.a)<0.7;
+ });
+ if(words.length===0)words=all;
+}
+
+let i=0;
+
+function speak(){
+ let u=new SpeechSynthesisUtterance(words[i]);
+ u.rate=0.8;
+ speechSynthesis.speak(u);
+}
+
+let rec=new webkitSpeechRecognition();
+rec.onresult=e=>{
+ let t=e.results[0][0].transcript.toLowerCase().replace(/ /g,"");
+ ans.value=t;
+ check(t);
+};
+
+function listen(){rec.start();}
+
+function highlight(u,c){
+ let out="";
+ for(let i=0;i<c.length;i++){
+  if(u[i]===c[i]) out+="<span class='correct'>"+c[i]+"</span>";
+  else out+="<span class='wrong'>"+(u[i]||"_")+"</span>";
+ }
+ letters.innerHTML=out;
+}
+
+function check(input){
+ let w=words[i];
+ if(!perf[w]) perf[w]={a:0,c:0};
+ perf[w].a++;
+
+ highlight(input,w);
+
+ if(input===w){
+  res.innerText="Correct";
+  perf[w].c++;
+  i++;
+ }else{
+  res.innerText="Try again";
+ }
+
+ localStorage.setItem("perf",JSON.stringify(perf));
+
+ if(i>=words.length){
+  alert("Done");
+  location.href="index.html";
+ }
+}
+</script>
+</body>
+</html>

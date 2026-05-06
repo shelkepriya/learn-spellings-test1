@@ -1,0 +1,9 @@
+{
+"name":"Spelling App",
+"short_name":"Spelling",
+"start_url":"index.html",
+"display":"standalone",
+"background_color":"#6a85ff",
+"theme_color":"#6a85ff",
+"icons":[{"src":"icon.png","sizes":"192x192","type":"image/png"}]
+}
