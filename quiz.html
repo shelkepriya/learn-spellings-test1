@@ -38,37 +38,10 @@ if(mode==="weak"){
 }
 
 let i=0;
-
 function speak(){
-  if(!words[i]){
-    alert("No word found. Please add words in Parent mode.");
-    return;
-  }
-
-  // cancel any ongoing speech
-  speechSynthesis.cancel();
-
-  let utterance = new SpeechSynthesisUtterance(words[i]);
-
-  // wait for voices to load properly
-  let voices = speechSynthesis.getVoices();
-
-  if(voices.length === 0){
-    speechSynthesis.onvoiceschanged = () => speak();
-    return;
-  }
-
-  // optional: pick English voice
-  let voice = voices.find(v => v.lang.includes("en"));
-  if(voice){
-    utterance.voice = voice;
-  }
-
-  utterance.rate = 0.8;
-  utterance.pitch = 1;
-
-  speechSynthesis.speak(utterance);
+  speechSynthesis.speak(new SpeechSynthesisUtterance(words[i]||""));
 }
+
 
 let rec=new webkitSpeechRecognition();
 rec.onresult=e=>{
